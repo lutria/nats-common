@@ -1,11 +1,11 @@
-import { RetentionPolicy } from 'nats'
+import { RetentionPolicy } from "nats";
 
-export const EVENT_STREAM_PREFIX = "events"
+export const EVENT_STREAM_PREFIX = "events";
 
 export default [
   {
     name: "EVENTS",
     retention: RetentionPolicy.Workqueue,
-    subjects: [`${EVENT_STREAM_PREFIX}.>`]
-  }
-]
+    subjects: [`${EVENT_STREAM_PREFIX}.>`],
+  },
+];
