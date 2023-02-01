@@ -6,6 +6,7 @@ import {
   Subscription,
 } from "nats";
 import pino from "pino";
+import { LutriaEvent } from "@lutria/types";
 import streams from "./streams";
 
 class NatsClient {
@@ -77,12 +78,12 @@ class NatsClient {
   async subscribe(
     subject: string,
     queue: string,
-    handler: <T>(data: T) => void
+    handler: <T extends LutriaEvent>(data: T) => void
   ) {
     const handleMessage = async (s: Subscription) => {
       for await (const m of s) {
         const data = this.jsonCodec.decode(m.data);
-        handler(data);
+        handler(data as LutriaEvent);
       }
     };
 

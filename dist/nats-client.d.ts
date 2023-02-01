@@ -1,4 +1,5 @@
 import pino from "pino";
+import { LutriaEvent } from "@lutria/types";
 declare class NatsClient {
   private jsonCodec;
   private logger;
@@ -21,7 +22,7 @@ declare class NatsClient {
   subscribe(
     subject: string,
     queue: string,
-    handler: <T>(data: T) => void
+    handler: <T extends LutriaEvent>(data: T) => void
   ): Promise<void>;
 }
 export default NatsClient;
