@@ -1,14 +1,34 @@
-import { connect, JSONCodec } from "nats";
-import streams from "./streams.js";
+import {
+  connect,
+  JetStreamClient,
+  JSONCodec,
+  NatsConnection,
+  Subscription,
+} from "nats";
+import pino from "pino";
+import streams from "./streams";
 
 class NatsClient {
-  constructor(config = {}) {
-    Object.assign(this, {
-      logger: config.logger,
-      name: config.name,
-      servers: config.servers,
-    });
+  private jsonCodec;
+  private logger;
+  private name;
+  private servers;
 
+  private js?: JetStreamClient;
+  private nc?: NatsConnection;
+
+  constructor({
+    logger,
+    name,
+    servers,
+  }: {
+    logger: pino.Logger;
+    name: string;
+    servers: string;
+  }) {
+    this.logger = logger;
+    this.name = name;
+    this.servers = servers;
     this.jsonCodec = JSONCodec();
   }
 
@@ -44,26 +64,34 @@ class NatsClient {
   async disconnect() {
     // Finally we drain the connection which waits for any pending
     // messages (published or in a subscription) to be flushed.
-    await this.nc.drain();
+    await this.nc?.drain();
 
-    await this.nc.close();
+    await this.nc?.close();
   }
 
-  async publish(subject, data) {
+  async publish(subject: string, data: any) {
     // Publish a series of messages and wait for each one to be completed.
-    await this.js.publish(subject, this.jsonCodec.encode(data));
+    await this.js?.publish(subject, this.jsonCodec.encode(data));
   }
 
-  async subscribe(subject, queue, handler) {
-    const handleMessage = async (s) => {
+  async subscribe(
+    subject: string,
+    queue: string,
+    handler: <T>(data: T) => void
+  ) {
+    const handleMessage = async (s: Subscription) => {
       for await (const m of s) {
         const data = this.jsonCodec.decode(m.data);
         handler(data);
       }
     };
 
-    const sub = this.nc.subscribe(subject, { queue });
-    handleMessage(sub);
+    const sub = this.nc?.subscribe(subject, { queue });
+    if (sub) {
+      handleMessage(sub);
+    } else {
+      throw new Error("Failed to create subscription");
+    }
   }
 }
 
