@@ -310,8 +310,21 @@ var NatsClient = /** @class */ (function () {
                   _a = false;
                   try {
                     m = _d;
-                    data = this.jsonCodec.decode(m.data);
-                    handler(data);
+                    data = void 0;
+                    try {
+                      data = this.jsonCodec.decode(m.data);
+                    } catch (error) {
+                      this.logger.error("Failed to decode data");
+                      // TODO: Send to DLQ
+                      return [3 /*break*/, 3];
+                    }
+                    try {
+                      handler(data);
+                    } catch (error) {
+                      this.logger.error("Handler threw error");
+                      // TODO: Send to DLQ
+                      return [3 /*break*/, 3];
+                    }
                   } finally {
                     _a = true;
                   }

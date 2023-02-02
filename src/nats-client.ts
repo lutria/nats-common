@@ -82,8 +82,22 @@ class NatsClient {
   ) {
     const handleMessage = async (s: Subscription) => {
       for await (const m of s) {
-        const data = this.jsonCodec.decode(m.data);
-        handler(data as LutriaEvent);
+        let data;
+        try {
+          data = this.jsonCodec.decode(m.data);
+        } catch (error) {
+          this.logger.error("Failed to decode data");
+          // TODO: Send to DLQ
+          continue;
+        }
+
+        try {
+          handler(data as LutriaEvent);
+        } catch (error) {
+          this.logger.error("Handler threw error");
+          // TODO: Send to DLQ
+          continue;
+        }
       }
     };
 
